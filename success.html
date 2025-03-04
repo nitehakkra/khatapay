@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Processing</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    integrity="sha512-dphf6c+pwlp7RHFb5I2HFS3loE6kITs0X5Ai2TeZ1nLaqXX6SbeBiXUR7cC6t/7CBIIR+z5hK9+u+XJ3oX5IJw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      color: #333;
+      position: relative;
+      overflow: hidden;
+      background: #f8f9fa;
+    }
+
+    /* Loading Page Styles */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      transition: opacity 0.5s ease-out;
+      padding: 1rem;
+    }
+
+    .loading-dots {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin: 0 4px;
+      border-radius: 50%;
+      background-color: #3b82f6;
+      animation: bounce 0.5s infinite;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .text-container {
+      margin-top: 0.5rem;
+      padding: 0 1rem;
+    }
+
+    .main-text {
+      font-size: clamp(1rem, 4vw, 1.25rem);
+      font-weight: 500;
+      color: rgb(31, 41, 55);
+      margin-bottom: 0.5rem;
+    }
+
+    .sub-text {
+      font-size: clamp(0.75rem, 3vw, 0.875rem);
+      color: rgb(156, 163, 175);
+      margin: 0;
+    }
+
+    /* Success Page Styles */
+    .success-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Decorative background circle */
+    .success-container::before {
+      content: '';
+      position: fixed;
+      top: -50vh;
+      left: -25vw;
+      width: 150vw;
+      height: 100vh;
+      background: rgba(34, 197, 94, 0.25);
+      border-radius: 0 0 50% 50%;
+      z-index: -1;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    /* White gradient overlay */
+    .success-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 60%,
+        rgba(255, 255, 255, 1) 100%
+      );
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .icon {
+      margin-bottom: clamp(0.5rem, 3vw, 1rem);
+      position: relative;
+      z-index: 1;
+    }
+
+    .icon-circle.success {
+      width: clamp(60px, 15vw, 80px);
+      height: clamp(60px, 15vw, 80px);
+      border: 4px solid #4CAF50;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .icon-circle.success svg {
+      width: 50%;
+      height: 50%;
+    }
+
+    h1 {
+      font-size: clamp(1.25rem, 5vw, 1.5rem);
+      margin: clamp(0.5rem, 3vw, 1rem) 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .info {
+      background: #fff;
+      border-radius: 10px;
+      padding: clamp(1rem, 4vw, 1.25rem);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      max-width: min(400px, 90%);
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .info p {
+      margin: clamp(0.5rem, 2vw, 0.75rem) 0;
+      font-size: clamp(0.875rem, 3.5vw, 1rem);
+      word-break: break-word;
+    }
+
+    .amount-message {
+      color: #4CAF50;
+      font-size: clamp(1rem, 4vw, 1.125rem);
+      font-weight: bold;
+      margin-top: clamp(0.5rem, 2vw, 0.75rem);
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Page -->
+  <div class="loading-container" id="loadingContent">
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="text-container">
+      <p class="main-text">Please wait while we confirm your payment</p>
+      <p class="sub-text">Do not press back button or refresh this page</p>
+    </div>
+  </div>
+
+  <!-- Success Page -->
+  <div class="success-container" id="finalContent">
+    <div class="icon">
+      <div class="icon-circle success">
+        <svg viewBox="0 0 24 24" fill="url(#tickGradient)" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="tickGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#66bb6a"/>
+              <stop offset="100%" stop-color="#2e7d32"/>
+            </linearGradient>
+          </defs>
+          <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 12-12-1.4-1.4z"/>
+        </svg>
+      </div>
+    </div>
+    <h1>Payment Successful</h1>
+    <div class="info">
+      <p>Order Reference ID: <span id="orderRef"></span></p>
+      <p class="amount-message">Amount Paid: <span id="amountPaid"></span></p>
+      <p>Payment Mode: Card</p>
+      <p>Time: <span id="time"></span></p>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const loadingContent = document.getElementById('loadingContent');
+      const finalContent = document.getElementById('finalContent');
+
+      // Show loading page for 4.5 seconds
+      setTimeout(() => {
+        // Fade out loading page
+        loadingContent.style.opacity = '0';
+        
+        setTimeout(() => {
+          // Hide loading page and show success page
+          loadingContent.style.display = 'none';
+          finalContent.style.display = 'flex';
+          
+          // Fade in success page
+          setTimeout(() => {
+            finalContent.style.opacity = '1';
+          }, 50);
+
+          // Retrieve transaction details from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const invoiceId = urlParams.get('invoiceId');
+          
+          if (!invoiceId) {
+            document.getElementById("orderRef").textContent = 'DEMO-123456';
+            document.getElementById("amountPaid").textContent = '₹1,234.00';
+            document.getElementById("time").textContent = new Date().toLocaleString();
+            return;
+          }
+
+          // If invoice ID exists, fetch real transaction details
+          fetch(`/api/getTransactionDetails?invoiceId=${invoiceId}`)
+            .then(response => {
+              if (!response.ok) throw new Error('Transaction details not found');
+              return response.json();
+            })
+            .then(txn => {
+              document.getElementById("orderRef").textContent = txn.id;
+              let displayAmount = "0.00";
+              if (txn.amount) {
+                const numAmount = parseFloat(txn.amount);
+                if (!isNaN(numAmount)) {
+                  displayAmount = numAmount.toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  });
+                }
+              }
+              document.getElementById("amountPaid").textContent = "₹" + displayAmount;
+              document.getElementById("time").textContent = txn.timestamp || new Date().toLocaleString();
+            })
+            .catch(error => {
+              document.getElementById("orderRef").textContent = 'Error';
+              document.getElementById("amountPaid").textContent = 'Error';
+              document.getElementById("time").textContent = new Date().toLocaleString();
+            });
+        }, 500);
+      }, 4500);
+    });
+  </script>
+</body>
+</html>

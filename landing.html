@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Landing Page</title>
+  <style>
+    body {
+      background-color: white;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #2196F3;
+      clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 70%, 0 80%);
+      z-index: -1;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .merchant-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      display: block;
+      border-radius: 8px;
+    }
+    .input-container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px;
+      margin: 8px 0;
+    }
+    .contact-label {
+      color: #666;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .instruction-text {
+      color: #999;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    .mobile-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .country-code {
+      background: #f0f0f0;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    select.country-select {
+      border: 1px solid #ddd;
+      background: white;
+      font-size: 14px;
+      padding: 2px 4px;
+      width: 60px;
+      appearance: none;
+    }
+    input[type="tel"],
+    input[type="email"] {
+      border: none;
+      outline: none;
+      font-size: 16px;
+      width: 100%;
+      padding: 6px;
+    }
+    .error-msg {
+      color: red;
+      font-size: 14px;
+      margin-top: 8px;
+      display: none;
+    }
+    .proceed-button {
+      background: #00a991;
+      color: white;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .proceed-button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .loader {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 8px;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .footer-logos {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+    .footer-logos img {
+      max-height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="merchant-name">GEEKAY</div>
+      <img src="https://images.unsplash.com/photo-1572059002053-8cc5ad2f4a38?w=80&h=80&fit=crop" alt="Logo" class="logo" />
+    </div>
+    <span class="contact-label">Contact details</span>
+    <p class="instruction-text">Enter mobile number and email (optional) to continue</p>
+    <div class="input-container">
+      <div class="mobile-input">
+        <div class="country-code">
+          <select class="country-select">
+            <option value="+91">+91 India</option>
+            <option value="+1">+1 USA</option>
+            <option value="+44">+44 UK</option>
+            <option value="+65">+65 Singapore</option>
+            <option value="+971">+971 UAE</option>
+          </select>
+        </div>
+        <input type="tel" placeholder="Mobile number" pattern="[0-9]{10}" id="phoneInput" />
+      </div>
+    </div>
+    <div class="input-container">
+      <input type="email" placeholder="Email (optional)" id="emailInput" />
+    </div>
+    <div id="phoneError" class="error-msg">Please enter your phone number</div>
+    <button class="proceed-button" id="proceedBtn">
+      <span class="btn-text">Proceed to Pay</span>
+      <span class="loader"></span>
+    </button>
+  </div>
+  <div class="footer-logos">
+    <img src="https://www.pcisecuritystandards.org/wp-content/uploads/2022/03/pci-logo-teal.svg" alt="PCI DSS Logo" />
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Razorpay_logo.svg/2560px-Razorpay_logo.svg.png" alt="Razorpay" />
+    <img src="https://www.mastercard.us/content/dam/public/mastercardcom/na/us/en/homepage/Home/mc-logo-52.svg" alt="MasterCard" />
+    <img src="https://usa.visa.com/dam/VCOM/regional/ve/romania/blogs/hero-image/visa-logo-800x450.jpg" alt="Visa" />
+  </div>
+  <script>
+    document.getElementById('proceedBtn').addEventListener('click', function() {
+      var phoneInput = document.getElementById('phoneInput');
+      var emailInput = document.getElementById('emailInput');
+      var phoneError = document.getElementById('phoneError');
+      var phoneVal = phoneInput.value.trim();
+      if (!phoneVal || !/^\d{10}$/.test(phoneVal)) {
+        phoneError.style.display = 'block';
+        phoneInput.focus();
+        return;
+      }
+      phoneError.style.display = 'none';
+      var btn = this;
+      btn.disabled = true;
+      var loader = btn.querySelector('.loader');
+      loader.style.display = 'inline-block';
+      localStorage.setItem('userPhone', phoneVal);
+      localStorage.setItem('userEmail', emailInput.value.trim());
+      const urlParams = new URLSearchParams(window.location.search);
+      const pid = urlParams.get('pid');
+      setTimeout(function(){
+        window.location.href = `/payment.html?pid=${pid}`;
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
